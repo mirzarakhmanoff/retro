@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>O'zbek Retro TV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{--green:#5dff6a;--amber:#ffb84d;--bg:#120d0a}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{background:radial-gradient(ellipse at 50% 20%,#3a2a1e 0%,#1a120d 55%,#0b0806 100%);color:#efe6dc;font-family:Inter,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:24px 14px 60px}
+  h1{font-family:VT323,monospace;font-size:clamp(34px,6vw,58px);letter-spacing:4px;margin:0;color:var(--amber);text-shadow:0 0 18px rgba(255,170,60,.45)}
+  .tag{opacity:.65;margin:4px 0 18px;font-size:14px;text-align:center}
+
+  /* ---------- davr tanlash ---------- */
+  .decades{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:22px}
+  .decades button{font-family:VT323,monospace;font-size:24px;padding:6px 18px;border-radius:999px;border:2px solid #5b4434;background:#24180f;color:#cdb9a6;cursor:pointer;transition:.2s}
+  .decades button small{display:block;font-family:Inter;font-size:10px;opacity:.7;margin-top:-3px}
+  .decades button.active{background:var(--amber);color:#1a120d;border-color:var(--amber);box-shadow:0 0 18px rgba(255,184,77,.5)}
+
+  /* ---------- televizor ---------- */
+  .tv{width:min(980px,100%);display:grid;grid-template-columns:1fr 130px;gap:22px;padding:30px;border-radius:34px;
+      background:linear-gradient(135deg,#6b4527 0%,#4a2e18 40%,#5c3a1f 70%,#3b2412 100%);
+      box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 2px 0 rgba(255,255,255,.12),inset 0 -6px 18px rgba(0,0,0,.5);position:relative;transition:all .4s}
+  .tv::before{content:"";position:absolute;inset:0;border-radius:34px;pointer-events:none;
+      background:repeating-linear-gradient(95deg,rgba(0,0,0,.06) 0 3px,transparent 3px 9px);mix-blend-mode:multiply}
+  .bezel{background:#1b1714;padding:18px;border-radius:26px;box-shadow:inset 0 0 0 3px #2c2520,inset 0 8px 20px rgba(0,0,0,.8)}
+  .screen{position:relative;aspect-ratio:4/3;background:#050505;border-radius:42px/32px;overflow:hidden;
+      box-shadow:inset 0 0 60px rgba(0,0,0,.9)}
+  .screen .layer{position:absolute;inset:0}
+  #ytwrap{position:absolute;inset:0;pointer-events:none}
+  #ytwrap iframe{width:100%;height:100%;border:0}
+  .tv.crt #ytwrap{filter:saturate(.8) contrast(1.08) sepia(.12) blur(.35px)}
+  .scan{pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(0,0,0,.28) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+  .vignette{pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.75) 100%)}
+  .glare{pointer-events:none;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,transparent 35%)}
+  canvas#static{width:100%;height:100%;image-rendering:pixelated;opacity:0;transition:opacity .15s}
+  canvas#static.show{opacity:1}
+  canvas#static.dim{opacity:.55}
+  .osd{position:absolute;top:6%;right:7%;font-family:VT323,monospace;color:var(--green);text-align:right;
+      font-size:clamp(22px,4.2vw,46px);line-height:.9;text-shadow:0 0 8px rgba(93,255,106,.8),2px 2px 0 #000;opacity:0;transition:opacity .3s;pointer-events:none}
+  .osd small{display:block;font-size:.55em}
+  .osd small.vt{font-size:.42em;color:#fff;max-width:60vw;margin-top:4px}
+  .filewarn{background:#5a1d14;color:#ffd9cf;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:14px;max-width:980px;text-align:center}
+  .osd.show{opacity:1}
+  .volosd{position:absolute;bottom:9%;left:50%;transform:translateX(-50%);font-family:VT323,monospace;color:var(--green);font-size:clamp(18px,3vw,32px);
+      text-shadow:0 0 8px rgba(93,255,106,.8),2px 2px 0 #000;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
+  .volosd.show{opacity:1}
+  .bug{position:absolute;top:6%;left:7%;font-family:Inter;font-weight:800;font-size:clamp(11px,1.8vw,18px);color:rgba(255,255,255,.75);
+      text-shadow:1px 1px 2px rgba(0,0,0,.8);letter-spacing:1px;pointer-events:none}
+  .nosig{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:VT323,monospace;color:#fff;
+      font-size:clamp(22px,4vw,44px);text-shadow:2px 2px 0 #000;gap:6px;padding:10%}
+  .nosig > *{background:rgba(0,0,0,.55);padding:4px 14px;border-radius:6px}
+  .nosig small{font-family:Inter;font-size:clamp(11px,1.6vw,15px);opacity:.85;max-width:420px}
+  .nosig.show{display:flex;z-index:2}
+  .off{background:#0a0a0a;display:flex;align-items:center;justify-content:center;font-family:VT323,monospace;color:#555;font-size:clamp(18px,3vw,30px);z-index:5;transition:opacity .2s}
+  .tv.on .off{opacity:0;pointer-events:none}
+  .tv.on .content{animation:poweron .55s ease-out}
+  .tv.turningoff .content{animation:poweroff .45s ease-in forwards}
+  @keyframes poweron{0%{transform:scale(1,.004);filter:brightness(4)}45%{transform:scale(1,.004);filter:brightness(4)}100%{transform:scale(1,1);filter:brightness(1)}}
+  @keyframes poweroff{0%{transform:scale(1,1)}50%{transform:scale(1,.004);filter:brightness(3)}100%{transform:scale(0,.004);filter:brightness(5)}}
+  .menu{display:none;background:rgba(0,0,40,.88);z-index:4;padding:6% 8%;font-family:VT323,monospace;color:#fff;overflow:auto}
+  .menu.show{display:block}
+  .menu h3{margin:0 0 8px;font-weight:normal;color:var(--amber);font-size:clamp(20px,3.4vw,36px)}
+  .menu .row{display:flex;justify-content:space-between;padding:2px 10px;font-size:clamp(16px,2.6vw,28px);cursor:pointer;border-radius:4px}
+  .menu .row.cur{background:var(--green);color:#000}
+  .menu .row:hover{outline:1px solid var(--green)}
+
+  /* ---------- tugmalar ---------- */
+  .panel{display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:6px}
+  .brand{font-family:VT323,monospace;font-size:22px;color:#e8d3b5;letter-spacing:2px;text-align:center;line-height:1}
+  .brand small{display:block;font-size:13px;opacity:.6}
+  .grille{width:100%;height:70px;border-radius:10px;background:repeating-linear-gradient(0deg,#2a1a0e 0 3px,#4a301b 3px 6px);box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+  .btn{height:42px;border-radius:10px;border:0;cursor:pointer;font-family:VT323,monospace;font-size:20px;color:#e8d3b5;
+      background:linear-gradient(#3a2a1e,#22170f);box-shadow:0 3px 0 #120b06,inset 0 1px 0 rgba(255,255,255,.12)}
+  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 #120b06}
+  .btn.wide{grid-column:span 2}
+  .power{width:62px;height:62px;border-radius:50%;font-size:28px;background:radial-gradient(circle at 35% 30%,#7a2b22,#3d100c);color:#ffd7cc}
+  .led{width:10px;height:10px;border-radius:50%;background:#401010;box-shadow:inset 0 0 2px #000}
+  .tv.on .led{background:#ff3b2f;box-shadow:0 0 10px #ff3b2f}
+  .knob{width:70px;height:70px;border-radius:50%;background:conic-gradient(#2b1d12,#5a3f2a,#2b1d12,#5a3f2a,#2b1d12);
+      box-shadow:0 4px 10px rgba(0,0,0,.6),inset 0 0 0 6px #1d140c;position:relative;cursor:pointer;transition:transform .35s}
+  .knob::after{content:"";position:absolute;top:8px;left:50%;width:4px;height:16px;margin-left:-2px;background:var(--amber);border-radius:2px}
+
+  /* LCD (2000/2010-lar) uslubi */
+  .tv.lcd{background:linear-gradient(160deg,#2b2b2e,#0d0d0f);grid-template-columns:1fr;padding:16px 16px 12px;border-radius:14px}
+  .tv.lcd::before{display:none}
+  .tv.lcd .bezel{padding:0;border-radius:4px;background:#000}
+  .tv.lcd .screen{aspect-ratio:16/9;border-radius:2px}
+  .tv.lcd .scan,.tv.lcd .vignette{display:none}
+  .tv.lcd .panel{flex-direction:row;flex-wrap:wrap;justify-content:center;padding:4px 0 0}
+  .tv.lcd .grille,.tv.lcd .knob{display:none}
+  .tv.lcd .btns{display:flex;width:auto}
+  .tv.lcd .btn{height:34px;padding:0 14px;background:#1c1c1f;box-shadow:none;border:1px solid #333;color:#bbb;font-size:18px}
+  .tv.lcd .power{width:34px;height:34px;font-size:18px}
+  .tv.lcd .brand{font-family:Inter;font-weight:800;font-size:13px;letter-spacing:6px;color:#888}
+  .tv.lcd .brand small{display:none}
+  .tv.lcd .led{background:#0a2a5a}
+  .tv.lcd.on .led{background:#3aa0ff;box-shadow:0 0 8px #3aa0ff}
+
+  .hint{margin-top:16px;font-size:13px;opacity:.6;text-align:center;line-height:1.7}
+  kbd{font-family:VT323,monospace;font-size:16px;background:#2a1d14;border:1px solid #4d382a;border-radius:4px;padding:0 6px}
+
+  /* ---------- kontent paneli ---------- */
+  details.studio{width:min(980px,100%);margin-top:26px;background:#1d1510;border:1px solid #3d2c20;border-radius:16px;padding:0 20px}
+  details.studio summary{cursor:pointer;padding:16px 0;font-weight:800;color:var(--amber);list-style:none}
+  details.studio summary::-webkit-details-marker{display:none}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+  label{font-size:12px;opacity:.75;display:block;margin-bottom:4px}
+  input,select,textarea{width:100%;padding:9px 10px;border-radius:8px;border:1px solid #4a3627;background:#120d0a;color:#efe6dc;font-family:inherit;font-size:14px}
+  textarea{min-height:110px;font-family:ui-monospace,monospace;font-size:12px}
+  .act{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+  .act button{padding:9px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:600;background:#3a2a1e;color:#efe6dc}
+  .act button.primary{background:var(--amber);color:#1a120d}
+  .vlist{list-style:none;padding:0;margin:0 0 16px;max-height:260px;overflow:auto}
+  .vlist li{display:flex;gap:10px;align-items:center;padding:7px 8px;border-bottom:1px solid #2e2118;font-size:14px}
+  .vlist li img{width:64px;height:36px;object-fit:cover;border-radius:4px;background:#000}
+  .vlist li span{flex:1}
+  .vlist li button{background:none;border:0;color:#ff8c7a;cursor:pointer;font-size:16px}
+  .msg{font-size:13px;color:var(--green);min-height:18px}
+  .err{color:#ff8c7a}
+  @media (max-width:640px){.tv{grid-template-columns:1fr;padding:16px}.panel{flex-direction:row;flex-wrap:wrap;justify-content:center}.grille,.knob{display:none}.btns{display:flex;width:auto}.btn{padding:0 12px}}
+</style>
+</head>
+<body>
+
+<h1>O'ZBEK RETRO TV</h1>
+<div class="tag">O'zbek televideniyesi turli yillarda qanday bo'lgan, shuni tomosha qiling</div>
+
+<div class="decades" id="decades"></div>
+
+<div class="tv crt" id="tv">
+  <div class="bezel">
+    <div class="screen" id="screen">
+      <div class="layer content">
+        <div id="ytwrap"><div id="yt"></div></div>
+        <div class="layer nosig" id="nosig"></div>
+        <canvas class="layer" id="static" width="200" height="150"></canvas>
+        <div class="bug" id="bug"></div>
+        <div class="osd" id="osd"></div>
+        <div class="volosd" id="volosd"></div>
+        <div class="layer menu" id="menu"></div>
+        <div class="layer scan"></div>
+        <div class="layer vignette"></div>
+      </div>
+      <div class="layer glare"></div>
+      <div class="layer off" id="offscreen">⏻ tugmasini bosing</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="brand" id="brandName">ELEKTRON<small>Ц-280</small></div>
+    <div class="grille"></div>
+    <div class="knob" id="knob" title="Kanalni almashtirish"></div>
+    <div class="btns">
+      <button class="btn" id="chUp">KN ▲</button>
+      <button class="btn" id="chDn">KN ▼</button>
+      <button class="btn" id="volUp">OVOZ +</button>
+      <button class="btn" id="volDn">OVOZ −</button>
+      <button class="btn wide" id="menuBtn">MENYU</button>
+    </div>
+    <div class="led"></div>
+    <button class="btn power" id="powerBtn" title="Yoqish / o'chirish">⏻</button>
+  </div>
+</div>
+
+<div class="hint">
+  <kbd>P</kbd> yoqish &nbsp; <kbd>↑</kbd><kbd>↓</kbd> kanal &nbsp; <kbd>←</kbd><kbd>→</kbd> ovoz &nbsp; <kbd>1</kbd>–<kbd>9</kbd> kanal raqami &nbsp;
+  <kbd>D</kbd> keyingi davr &nbsp; <kbd>M</kbd> ovozsiz &nbsp; <kbd>F</kbd> to'liq ekran &nbsp; <kbd>Esc</kbd> menyuni yopish
+</div>
+
+<details class="studio" id="studio">
+  <summary>＋ Kanallarga video qo'shish (studiya)</summary>
+  <div class="grid">
+    <div><label>Davr</label><select id="sDecade"></select></div>
+    <div><label>Kanal</label><select id="sChannel"></select></div>
+    <div><label>Yil (ixtiyoriy)</label><input id="sYear" placeholder="masalan 1997"></div>
+  </div>
+  <div class="grid">
+    <div style="grid-column:span 2"><label>YouTube havolasi yoki ID</label><input id="sLink" placeholder="https://www.youtube.com/watch?v=..."></div>
+    <div><label>Sarlavha</label><input id="sTitle" placeholder="masalan: Reklama bloki"></div>
+  </div>
+  <div class="act">
+    <button class="primary" id="addBtn">Kanalga qo'shish</button>
+    <button id="newChBtn">Yangi kanal ochish</button>
+  </div>
+  <div class="msg" id="sMsg"></div>
+  <ul class="vlist" id="vlist"></ul>
+  <label>Barcha ma'lumot (JSON): saqlab qo'ying yoki boshqa brauzerga ko'chiring</label>
+  <textarea id="json"></textarea>
+  <div class="act">
+    <button id="exportBtn">JSON'ni yangilash</button>
+    <button id="copyBtn">Nusxa olish</button>
+    <button id="importBtn">JSON'dan yuklash</button>
+    <button id="resetBtn">Standart holatga qaytarish</button>
+  </div>
+</details>
+
+<script>
+/* =========================================================
+   1. KANALLAR KONFIGURATSIYASI
+   Har bir video: { id: "YouTube ID", title: "...", year: 1997 }
+   Bo'sh kanallar "SIGNAL YO'Q" ko'rsatadi — studiya orqali to'ldiring.
+   ========================================================= */
+const DEFAULT_DATA = {
+  version: 1,
+  decades: [
+    { id: "80", name: "1980-lar", sub: "Sovet davri", style: "crt", brand: ["ELEKTRON", "Ц-280"], channels: [
+      { name: "O'zbekiston TV", logo: "ЎзТВ", videos: [] },
+      { name: "Kinozal", logo: "KINO", videos: [] },
+      { name: "Konsert", logo: "КОНЦЕРТ", videos: [] },
+      { name: "Multfilmlar", logo: "МУЛЬТ", videos: [] }
+    ]},
+    { id: "90", name: "1990-lar", sub: "Mustaqillik", style: "crt", brand: ["RUBIN", "714"], channels: [
+      { name: "UzTV-1", logo: "UzTV-1", videos: [] },
+      { name: "UzTV-2", logo: "UzTV-2", videos: [] },
+      { name: "Reklama", logo: "REKLAMA", videos: [] },
+      { name: "Kliplar", logo: "KLIP", videos: [] },
+      { name: "Bolalar uchun", logo: "BOLAJON", videos: [] },
+      { name: "Xronika", logo: "XRONIKA", videos: [
+        { id: "lA7PMcsJNQs", title: "Mustaqillik solnomasi: 1995-yil (O'zA)", year: 1995 },
+        { id: "Zoc8TJZVxDQ", title: "Mustaqillik solnomasi: 1997-yil (O'zA)", year: 1997 }
+      ]}
+    ]},
+    { id: "00", name: "2000-lar", sub: "Yangi asr", style: "crt", brand: ["SAMSUNG", "PLANO"], channels: [
+      { name: "O'zbekiston", logo: "O'ZBEKISTON", videos: [] },
+      { name: "Yoshlar", logo: "YOSHLAR", videos: [] },
+      { name: "Sport", logo: "SPORT", videos: [] },
+      { name: "Toshkent", logo: "TOSHKENT", videos: [] },
+      { name: "Kliplar", logo: "KLIP", videos: [] },
+      { name: "Reklama", logo: "REKLAMA", videos: [] },
+      { name: "Xronika", logo: "XRONIKA", videos: [
+        { id: "N4pww9rUh9M", title: "Mustaqillik solnomasi: 2000-yil (O'zA)", year: 2000 }
+      ]}
+    ]},
+    { id: "10", name: "2010-lar", sub: "Xususiy kanallar", style: "lcd", brand: ["ARTEL", ""], channels: [
+      { name: "Sevimli", logo: "SEVIMLI", videos: [] },
+      { name: "Milliy", logo: "MILLIY", videos: [] },
+      { name: "Zo'r TV", logo: "ZO'R TV", videos: [] },
+      { name: "MY5", logo: "MY5", videos: [] },
+      { name: "Kliplar", logo: "KLIP", videos: [] },
+      { name: "Reklama", logo: "REKLAMA", videos: [] }
+    ]}
+  ]
+};
+
+/* =========================================================
+   2. HOLAT
+   ========================================================= */
+const LS_DATA = "uzretrotv.data.v2", LS_DUR = "uzretrotv.dur.v1", LS_STATE = "uzretrotv.state.v1";
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let DATA = structuredClone(DEFAULT_DATA);
+const durations = store.get(LS_DUR, {});
+const saved = store.get(LS_STATE, {});
+let decIdx = saved.dec ?? 2;
+let chIdx = saved.ch ?? 0;
+let volume = saved.vol ?? 60, muted = false, powered = false;
+let player = null, apiReady = false;
+let current = null; // {vid, seeked}
+const broken = new Set();
+
+const $ = id => document.getElementById(id);
+const tv = $("tv");
+const dec = () => DATA.decades[decIdx];
+const chan = () => dec().channels[chIdx];
+function saveState(){ store.set(LS_STATE, { dec: decIdx, ch: chIdx, vol: volume }); }
+function saveData(){ store.set(LS_DATA, DATA); }
+function hash(s){ let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
+
+/* =========================================================
+   3. SHOVQIN (static) — rasm va ovoz
+   ========================================================= */
+const cv = $("static"), cx = cv.getContext("2d");
+const img = cx.createImageData(cv.width, cv.height);
+let staticLoop = false;
+function drawStatic(){
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4){ const v = Math.random() * 255 | 0; d[i] = d[i+1] = d[i+2] = v; d[i+3] = 255; }
+  cx.putImageData(img, 0, 0);
+  if (staticLoop) requestAnimationFrame(drawStatic);
+}
+function staticOn(mode){ cv.className = "layer " + (mode === "dim" ? "dim" : "show"); if (!staticLoop){ staticLoop = true; drawStatic(); } }
+function staticOff(){ cv.className = "layer"; staticLoop = false; }
+
+let actx = null;
+function noise(ms = 380){
+  if (muted || !volume) return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const len = actx.sampleRate * ms / 1000, buf = actx.createBuffer(1, len, actx.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+    const src = actx.createBufferSource(), g = actx.createGain();
+    g.gain.value = 0.06 * volume / 100; src.buffer = buf; src.connect(g).connect(actx.destination); src.start();
+  }catch(e){}
+}
+
+/* =========================================================
+   4. EKRAN YOZUVLARI (OSD)
+   ========================================================= */
+let osdT, volT;
+function showOSD(){
+  const c = chan();
+  const v = current && c.videos.find(x => x.id === current.vid);
+  $("osd").innerHTML = `KN ${String(chIdx + 1).padStart(2, "0")}<small>${esc(c.name)}</small><small>${dec().name}</small>` + (v ? `<small class="vt">${v.year ? v.year + " · " : ""}${esc(v.title.length > 46 ? v.title.slice(0, 45) + "…" : v.title)}</small>` : "");
+  $("osd").classList.add("show"); clearTimeout(osdT); osdT = setTimeout(() => $("osd").classList.remove("show"), 3200);
+  $("bug").textContent = c.logo || c.name;
+}
+function showVol(){
+  const n = Math.round(volume / 10);
+  $("volosd").textContent = muted ? "OVOZSIZ" : "OVOZ " + "▮".repeat(n) + "▯".repeat(10 - n);
+  $("volosd").classList.add("show"); clearTimeout(volT); volT = setTimeout(() => $("volosd").classList.remove("show"), 1800);
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+
+/* =========================================================
+   5. YOUTUBE PLEYER
+   ========================================================= */
+window.onYouTubeIframeAPIReady = function(){
+  player = new YT.Player("yt", {
+    width: "100%", height: "100%",
+    playerVars: { controls: 0, disablekb: 1, modestbranding: 1, rel: 0, iv_load_policy: 3, playsinline: 1, fs: 0, cc_load_policy: 0, origin: location.origin },
+    events: {
+      onReady(){ apiReady = true; applyVolume(); if (powered) tune(); },
+      onStateChange: onState,
+      onError(){ if (current){ broken.add(current.vid); nextVideo(); } }
+    }
+  });
+};
+function applyVolume(){ if (!player || !apiReady) return; player.setVolume(volume); muted ? player.mute() : player.unMute(); }
+
+function liveOffset(vid, d){
+  // "jonli efir" hissi: video soat bo'yicha o'rtasidan boshlanadi
+  if (d < 90) return 0;
+  return Math.floor((Date.now() / 1000 + hash(vid)) % (d - 10));
+}
+function playable(c){ return c.videos.filter(v => !broken.has(v.id)); }
+
+function tune(){
+  if (!powered) return;
+  const c = chan();
+  showOSD(); saveState(); renderMenu();
+  staticOn(); noise();
+  $("nosig").classList.remove("show");
+  const list = playable(c);
+  if (!list.length){
+    current = null;
+    if (player && apiReady) player.stopVideo();
+    setTimeout(() => {
+      if (chan() !== c || !powered) return;
+      staticOn("dim");
+      $("ytwrap").style.visibility = "hidden";
+      $("nosig").innerHTML = c.videos.length
+        ? `<span>SIGNAL YO'Q</span><small>Bu kanaldagi videolar ochilmadi (o'chirilgan yoki embed taqiqlangan).</small>`
+        : `<span>SIGNAL YO'Q</span><small>«${esc(c.name)}» kanali hali bo'sh. Pastdagi studiya orqali YouTube videolarini qo'shing.</small>`;
+      $("nosig").classList.add("show");
+    }, 450);
+    return;
+  }
+  if (ytFailed && !apiReady) return ytFail();
+  if (!player || !apiReady) return; // API tayyor bo'lgach tune() qayta chaqiriladi
+  const slot = Math.floor(Date.now() / 1000 / 900); // har 15 daqiqada boshqa video
+  const v = list[(slot + hash(c.name)) % list.length];
+  loadVideo(v.id, true);
+}
+function loadVideo(vid, live){
+  const d = durations[vid];
+  current = { vid, seeked: !live || !!d };
+  setTimeout(showOSD, 50);
+  $("ytwrap").style.visibility = "visible";
+  player.loadVideoById({ videoId: vid, startSeconds: live && d ? liveOffset(vid, d) : 0 });
+}
+function nextVideo(){
+  const list = playable(chan());
+  if (!list.length) return tune();
+  const i = current ? list.findIndex(v => v.id === current.vid) : -1;
+  staticOn(); noise(250);
+  loadVideo(list[(i + 1) % list.length].id, false);
+}
+function onState(e){
+  if (!current) return;
+  if (e.data === YT.PlayerState.PLAYING){
+    const d = player.getDuration();
+    if (d > 0 && !durations[current.vid]){ durations[current.vid] = d; store.set(LS_DUR, durations); }
+    if (!current.seeked && d > 0){ current.seeked = true; const o = liveOffset(current.vid, d); if (o > 2) player.seekTo(o, true); }
+    setTimeout(staticOff, 120);
+  }
+  if (e.data === YT.PlayerState.BUFFERING) staticOn("dim");
+  if (e.data === YT.PlayerState.ENDED) nextVideo();
+}
+
+/* =========================================================
+   6. BOSHQARUV
+   ========================================================= */
+function power(){
+  if (!powered){
+    powered = true; tv.classList.remove("turningoff"); tv.classList.add("on");
+    try{ actx && actx.resume(); }catch(e){}
+    applyVolume(); tune();
+  } else {
+    powered = false; tv.classList.add("turningoff");
+    noise(150); $("menu").classList.remove("show");
+    setTimeout(() => { tv.classList.remove("on", "turningoff"); staticOff(); $("nosig").classList.remove("show"); if (player && apiReady) player.stopVideo(); current = null; }, 450);
+  }
+}
+function setChannel(i){
+  const n = dec().channels.length;
+  chIdx = ((i % n) + n) % n;
+  $("knob").style.transform = `rotate(${chIdx * (360 / n)}deg)`;
+  tune();
+}
+function setDecade(i){
+  decIdx = ((i % DATA.decades.length) + DATA.decades.length) % DATA.decades.length;
+  chIdx = Math.min(chIdx, dec().channels.length - 1);
+  applyDecadeStyle(); renderDecades(); tune(); saveState();
+}
+function applyDecadeStyle(){
+  const d = dec();
+  tv.classList.toggle("crt", d.style === "crt"); tv.classList.toggle("lcd", d.style === "lcd");
+  $("brandName").innerHTML = `${esc(d.brand[0])}<small>${esc(d.brand[1] || "")}</small>`;
+}
+function vol(delta){ volume = Math.max(0, Math.min(100, volume + delta)); muted = false; applyVolume(); showVol(); saveState(); }
+
+function renderDecades(){
+  $("decades").innerHTML = DATA.decades.map((d, i) =>
+    `<button class="${i === decIdx ? "active" : ""}" data-i="${i}">${esc(d.name)}<small>${esc(d.sub)}</small></button>`).join("");
+}
+$("decades").onclick = e => { const b = e.target.closest("button"); if (b) setDecade(+b.dataset.i); };
+
+function renderMenu(){
+  $("menu").innerHTML = `<h3>${esc(dec().name)}: KANALLAR</h3>` + dec().channels.map((c, i) =>
+    `<div class="row ${i === chIdx ? "cur" : ""}" data-i="${i}"><span>${String(i + 1).padStart(2, "0")}  ${esc(c.name)}</span><span>${c.videos.length ? c.videos.length + " video" : "bo'sh"}</span></div>`).join("");
+}
+$("menu").onclick = e => { const r = e.target.closest(".row"); if (r){ setChannel(+r.dataset.i); $("menu").classList.remove("show"); } };
+
+$("powerBtn").onclick = power;
+$("chUp").onclick = () => powered && setChannel(chIdx + 1);
+$("chDn").onclick = () => powered && setChannel(chIdx - 1);
+$("knob").onclick = () => powered && setChannel(chIdx + 1);
+$("volUp").onclick = () => vol(10);
+$("volDn").onclick = () => vol(-10);
+$("menuBtn").onclick = () => { if (powered){ renderMenu(); $("menu").classList.toggle("show"); } };
+$("offscreen").onclick = () => { if (!powered) power(); };
+
+document.addEventListener("keydown", e => {
+  if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+  const k = e.key;
+  if (k === "p" || k === "P"){ power(); return; }
+  if (!powered) return;
+  if (k === "ArrowUp"){ e.preventDefault(); setChannel(chIdx + 1); }
+  else if (k === "ArrowDown"){ e.preventDefault(); setChannel(chIdx - 1); }
+  else if (k === "ArrowRight"){ e.preventDefault(); vol(10); }
+  else if (k === "ArrowLeft"){ e.preventDefault(); vol(-10); }
+  else if (k === "m" || k === "M"){ muted = !muted; applyVolume(); showVol(); }
+  else if (k === "d" || k === "D") setDecade(decIdx + 1);
+  else if (k === "f" || k === "F"){ const s = $("screen"); document.fullscreenElement ? document.exitFullscreen() : s.requestFullscreen?.().catch(() => {}); }
+  else if (k === "Escape") $("menu").classList.remove("show");
+  else if (/^[1-9]$/.test(k) && +k <= dec().channels.length) setChannel(+k - 1);
+});
+
+/* =========================================================
+   7. STUDIYA — video qo'shish, JSON eksport/import
+   ========================================================= */
+function parseYT(s){
+  s = s.trim();
+  if (/^[\w-]{11}$/.test(s)) return s;
+  const m = s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([\w-]{11})/);
+  return m ? m[1] : null;
+}
+function msg(t, bad){ $("sMsg").textContent = t; $("sMsg").className = "msg" + (bad ? " err" : ""); }
+function fillStudio(){
+  const di = +$("sDecade").value || 0;
+  $("sDecade").innerHTML = DATA.decades.map((d, i) => `<option value="${i}" ${i === di ? "selected" : ""}>${esc(d.name)}</option>`).join("");
+  const ci = Math.min(+$("sChannel").value || 0, DATA.decades[di].channels.length - 1);
+  $("sChannel").innerHTML = DATA.decades[di].channels.map((c, i) => `<option value="${i}" ${i === ci ? "selected" : ""}>${esc(c.name)} (${c.videos.length})</option>`).join("");
+  renderVList(); $("json").value = JSON.stringify(DATA, null, 2);
+}
+function renderVList(){
+  const c = DATA.decades[+$("sDecade").value].channels[+$("sChannel").value];
+  $("vlist").innerHTML = c.videos.length ? c.videos.map((v, i) =>
+    `<li><img loading="lazy" src="https://i.ytimg.com/vi/${v.id}/default.jpg" alt=""><span>${esc(v.title || v.id)}${v.year ? " · " + v.year : ""}</span><button data-i="${i}" title="O'chirish">✕</button></li>`).join("")
+    : `<li style="opacity:.6">Bu kanal hali bo'sh</li>`;
+}
+$("sDecade").onchange = () => { $("sChannel").value = 0; fillStudio(); };
+$("sChannel").onchange = renderVList;
+$("vlist").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  DATA.decades[+$("sDecade").value].channels[+$("sChannel").value].videos.splice(+b.dataset.i, 1);
+  saveData(); fillStudio(); if (powered) tune();
+};
+$("addBtn").onclick = () => {
+  const id = parseYT($("sLink").value);
+  if (!id) return msg("YouTube havolasini tanib bo'lmadi", true);
+  const di = +$("sDecade").value, ci = +$("sChannel").value, c = DATA.decades[di].channels[ci];
+  if (c.videos.some(v => v.id === id)) return msg("Bu video kanalda allaqachon bor", true);
+  c.videos.push({ id, title: $("sTitle").value.trim() || id, year: +$("sYear").value || undefined });
+  broken.delete(id); saveData();
+  $("sLink").value = ""; $("sTitle").value = "";
+  msg(`Qo'shildi: ${DATA.decades[di].name} → ${c.name}`);
+  fillStudio();
+  if (powered && di === decIdx && ci === chIdx) tune();
+};
+$("newChBtn").onclick = () => {
+  const name = $("sTitle").value.trim();
+  if (!name) return msg("Avval «Sarlavha» maydoniga yangi kanal nomini yozing", true);
+  const d = DATA.decades[+$("sDecade").value];
+  d.channels.push({ name, logo: name.toUpperCase(), videos: [] });
+  saveData(); $("sTitle").value = ""; $("sChannel").value = d.channels.length - 1; fillStudio();
+  $("sChannel").value = d.channels.length - 1; renderVList(); renderMenu();
+  msg(`«${name}» kanali ochildi`);
+};
+$("exportBtn").onclick = () => { $("json").value = JSON.stringify(DATA, null, 2); msg("JSON yangilandi"); };
+$("copyBtn").onclick = async () => {
+  try{ await navigator.clipboard.writeText($("json").value); msg("Nusxa olindi"); }
+  catch(e){ $("json").select(); msg("Matn belgilandi, Ctrl+C bosing"); }
+};
+$("importBtn").onclick = () => {
+  try{
+    const d = JSON.parse($("json").value);
+    if (!Array.isArray(d.decades) || !d.decades.length) throw 0;
+    DATA = d; decIdx = 0; chIdx = 0; saveData(); applyDecadeStyle(); renderDecades(); fillStudio(); tune();
+    msg("Yuklandi");
+  }catch(e){ msg("JSON noto'g'ri", true); }
+};
+$("resetBtn").onclick = () => {
+  if ($("resetBtn").dataset.sure !== "1"){ $("resetBtn").dataset.sure = "1"; $("resetBtn").textContent = "Aniqmi? Yana bosing"; return; }
+  DATA = structuredClone(BASE_DATA); saveData(); decIdx = 2; chIdx = 0;
+  $("resetBtn").dataset.sure = ""; $("resetBtn").textContent = "Standart holatga qaytarish";
+  applyDecadeStyle(); renderDecades(); fillStudio(); tune(); msg("Standart holat tiklandi");
+};
+
+/* =========================================================
+   8. ISHGA TUSHIRISH
+   ========================================================= */
+let BASE_DATA = DEFAULT_DATA;
+(async function init(){
+  if (location.protocol === "file:"){
+    const w = document.createElement("div"); w.className = "filewarn";
+    w.innerHTML = "Fayl to'g'ridan-to'g'ri ochilgan: YouTube bunday holatda video ko'rsatmaydi (Error 153). Papkada <b>npx serve</b> ishga tushiring yoki saytga joylang.";
+    document.body.insertBefore(w, $("decades"));
+  }
+  try{
+    const r = await fetch("data.json", { cache: "no-cache" });
+    if (r.ok) BASE_DATA = await r.json();
+  }catch(e){}
+  const stored = store.get(LS_DATA, null);
+  DATA = stored && stored.db === BASE_DATA.db ? stored : structuredClone(BASE_DATA);
+  decIdx = Math.min(decIdx, DATA.decades.length - 1);
+  chIdx = Math.min(chIdx, dec().channels.length - 1);
+  const total = DATA.decades.reduce((a, d) => a + d.channels.reduce((b, c) => b + c.videos.length, 0), 0);
+  document.querySelector(".tag").textContent = `O'zbek televideniyesi turli yillarda: ${total.toLocaleString("uz")} ta arxiv video`;
+  applyDecadeStyle(); renderDecades(); renderMenu(); fillStudio();
+  $("knob").style.transform = `rotate(${chIdx * (360 / dec().channels.length)}deg)`;
+  loadYTApi(0);
+})();
+let ytFailed = false;
+function ytFail(){
+  if (apiReady) return;
+  ytFailed = true;
+  if (!powered) return;
+  staticOn("dim");
+  $("nosig").innerHTML = `<span>SIGNAL YO'Q</span><small>YouTube pleyeri yuklanmadi. Internet, proksi yoki firewall YouTube'ni bloklayotgan bo'lishi mumkin. Sahifani yangilang.</small>`;
+  $("nosig").classList.add("show");
+}
+function loadYTApi(n){
+  const s = document.createElement("script"); s.src = "https://www.youtube.com/iframe_api";
+  s.onerror = () => { s.remove(); n < 3 ? setTimeout(() => loadYTApi(n + 1), 1500) : ytFail(); };
+  document.head.appendChild(s);
+  if (n === 0) setTimeout(ytFail, 20000);
+}
+</script>
+</body>
+</html>
